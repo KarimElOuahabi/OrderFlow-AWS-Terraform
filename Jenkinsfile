@@ -22,7 +22,24 @@ pipeline {
 
         stage('Secret scan') {
             steps {
-                sh 'docker run --rm --volumes-from jenkins-setup-jenkins-1 zricethezav/gitleaks:latest detect --source "$WORKSPACE" --redact --no-banner'
+                sh '''
+                    docker run --rm \
+                      --volumes-from jenkins-setup-jenkins-1 \
+                      zricethezav/gitleaks:latest \
+                      detect --source "$WORKSPACE" --redact --no-banner
+                '''
+            }
+        }
+
+        stage('Dependency scan') {
+            steps {
+                sh '''
+                    docker run --rm \
+                      --volumes-from jenkins-setup-jenkins-1 \
+                      aquasec/trivy:latest \
+                      fs --scanners vuln --severity HIGH,CRITICAL --exit-code 0 \
+                      "$WORKSPACE/services/order-service"
+                '''
             }
         }
     }
