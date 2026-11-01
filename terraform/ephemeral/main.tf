@@ -161,141 +161,6 @@ resource "aws_ecr_repository" "order_service" {
   }
 }
 
-resource "aws_iam_role" "eks_cluster" {
-  name = "${var.project_name}-eks-cluster-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Service = "eks.amazonaws.com"
-        }
-        Action = "sts:AssumeRole"
-      }
-    ]
-  })
-
-  tags = {
-    Name = "${var.project_name}-eks-cluster-role"
-  }
-}
-
-resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
-  role       = aws_iam_role.eks_cluster.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
-}
-
-resource "aws_eks_cluster" "eks_cluster" {
-  name     = "${var.project_name}-eks-cluster"
-  role_arn = aws_iam_role.eks_cluster.arn
-
-  vpc_config {
-    subnet_ids              = aws_subnet.private[*].id
-    endpoint_private_access = true
-  }
-
-  access_config {
-    authentication_mode                         = "API_AND_CONFIG_MAP"
-    bootstrap_cluster_creator_admin_permissions = true
-  }
-}
-
-resource "aws_iam_role" "eks_fargate_pod_execution" {
-  name = "${var.project_name}-eks-fargate-pod-execution"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Service = "eks-fargate-pods.amazonaws.com"
-        }
-        Action = "sts:AssumeRole"
-      }
-    ]
-  })
-
-  tags = {
-    Name = "${var.project_name}-eks-fargate-pod-execution"
-  }
-}
-
-resource "aws_iam_role_policy_attachment" "eks_fargate_pod_execution" {
-  role       = aws_iam_role.eks_fargate_pod_execution.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSFargatePodExecutionRolePolicy"
-}
-
-resource "aws_eks_fargate_profile" "fargate_profile" {
-  cluster_name           = aws_eks_cluster.eks_cluster.name
-  fargate_profile_name   = "${var.project_name}-fargate-profile"
-  pod_execution_role_arn = aws_iam_role.eks_fargate_pod_execution.arn
-
-  subnet_ids = aws_subnet.private[*].id
-
-  selector {
-    namespace = "default"
-  }
-
-  selector {
-    namespace = "kube-system"
-  }
-}
-
-data "tls_certificate" "eks" {
-  url = aws_eks_cluster.eks_cluster.identity[0].oidc[0].issuer
-}
-
-resource "aws_iam_openid_connect_provider" "eks" {
-  url = aws_eks_cluster.eks_cluster.identity[0].oidc[0].issuer
-
-  client_id_list = ["sts.amazonaws.com"]
-  thumbprint_list = [
-    data.tls_certificate.eks.certificates[0].sha1_fingerprint
-  ]
-}
-
-resource "aws_eks_access_entry" "admin" {
-  cluster_name  = aws_eks_cluster.eks_cluster.name
-  principal_arn = var.admin_principal_arn
-}
-
-resource "aws_eks_access_policy_association" "admin" {
-  cluster_name  = aws_eks_cluster.eks_cluster.name
-  principal_arn = aws_eks_access_entry.admin.principal_arn
-  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-  access_scope {
-    type = "cluster"
-  }
-}
-
-resource "aws_eks_addon" "vpc_cni" {
-  cluster_name = aws_eks_cluster.eks_cluster.name
-  addon_name   = "vpc-cni"
-
-  depends_on = [aws_eks_fargate_profile.fargate_profile]
-}
-
-resource "aws_eks_addon" "kube_proxy" {
-  cluster_name = aws_eks_cluster.eks_cluster.name
-  addon_name   = "kube-proxy"
-
-  depends_on = [aws_eks_fargate_profile.fargate_profile]
-}
-
-resource "aws_eks_addon" "coredns" {
-  cluster_name = aws_eks_cluster.eks_cluster.name
-  addon_name   = "coredns"
-
-  configuration_values = jsonencode({
-    computeType = "Fargate"
-  })
-
-  depends_on = [aws_eks_fargate_profile.fargate_profile]
-}
-
 resource "aws_db_subnet_group" "db" {
   name       = "${var.project_name}-db-subnet-group"
   subnet_ids = aws_subnet.private[*].id
@@ -311,10 +176,11 @@ resource "aws_security_group" "db" {
   vpc_id      = aws_vpc.main.id
 
   ingress {
-    from_port       = 5432
-    to_port         = 5432
-    protocol        = "tcp"
-    security_groups = [aws_eks_cluster.eks_cluster.vpc_config[0].cluster_security_group_id]
+    from_port = 5432
+    to_port   = 5432
+    protocol  = "tcp"
+    # Temporary: allow the whole VPC until the ECS tasks' security group exists, then restrict to that SG.
+    cidr_blocks = [var.vpc_cidr]
   }
 
   egress {
@@ -350,6 +216,3 @@ resource "aws_db_instance" "db" {
     Name = "${var.project_name}-db"
   }
 }
-
-
-

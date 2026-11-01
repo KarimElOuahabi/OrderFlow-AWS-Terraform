@@ -34,8 +34,3 @@ variable "private_subnet_cidrs" {
   type        = list(string)
   default     = ["10.0.101.0/24", "10.0.102.0/24"]
 }
-
-variable "admin_principal_arn" {
-  description = "IAM principal that gets admin access to the EKS cluster"
-  type        = string
-}
