@@ -48,7 +48,7 @@ pipeline {
                       -v trivy-cache:/root/.cache/ \
                       aquasec/trivy:latest \
                       image --input "$WORKSPACE/order-service-ci.tar" \
-                      --scanners vuln --severity HIGH,CRITICAL --exit-code 0 --timeout 15m
+                      --scanners vuln --severity HIGH,CRITICAL --exit-code 1 --timeout 15m
                     rm -f "$WORKSPACE/order-service-ci.tar"
                 '''
             }
