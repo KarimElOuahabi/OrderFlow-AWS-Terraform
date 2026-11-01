@@ -38,8 +38,8 @@ pipeline {
                       --volumes-from jenkins-setup-jenkins-1 \
                       -v trivy-cache:/root/.cache/ \
                       aquasec/trivy:latest \
-                      fs --scanners vuln --severity HIGH,CRITICAL --exit-code 0 \
-                      "$WORKSPACE/services/order-service/target/order-service-0.0.1-SNAPSHOT.jar"
+                      rootfs --scanners vuln --severity HIGH,CRITICAL --exit-code 0 \
+                      "$WORKSPACE/services/order-service/target"
                 '''
             }
         }
