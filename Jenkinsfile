@@ -31,15 +31,25 @@ pipeline {
             }
         }
 
-        stage('Dependency scan (Trivy)') {
+        stage('Docker build') {
+            steps {
+                dir('services/order-service') {
+                    sh 'docker build -t order-service:ci .'
+                }
+            }
+        }
+
+        stage('Image scan (Trivy)') {
             steps {
                 sh '''
+                    docker save order-service:ci -o "$WORKSPACE/order-service-ci.tar"
                     docker run --rm \
                       --volumes-from jenkins-setup-jenkins-1 \
                       -v trivy-cache:/root/.cache/ \
                       aquasec/trivy:latest \
-                      rootfs --scanners vuln --severity HIGH,CRITICAL --exit-code 0 \
-                      "$WORKSPACE/services/order-service/target"
+                      image --input "$WORKSPACE/order-service-ci.tar" \
+                      --scanners vuln --severity HIGH,CRITICAL --exit-code 0 --timeout 15m
+                    rm -f "$WORKSPACE/order-service-ci.tar"
                 '''
             }
         }
