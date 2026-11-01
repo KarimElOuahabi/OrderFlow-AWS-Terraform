@@ -12,8 +12,7 @@ terraform {
   }
 
   backend "s3" {
-    bucket       = "orderflow-terraform-state-666730152087"
-    key          = "infra/terraform.tfstate"
+    key          = "ephemeral/terraform.tfstate"
     region       = "us-east-1"
     use_lockfile = true
     encrypt      = true
@@ -21,7 +20,7 @@ terraform {
 }
 
 provider "aws" {
-  region = "us-east-1"
+  region = var.aws_region
 
   default_tags {
     tags = {
