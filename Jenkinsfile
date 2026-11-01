@@ -19,5 +19,11 @@ pipeline {
                 }
             }
         }
+
+        stage('Secret scan') {
+            steps {
+                sh 'docker run --rm --volumes-from jenkins-setup-jenkins-1 zricethezav/gitleaks:latest detect --source "$WORKSPACE" --redact --no-banner'
+            }
+        }
     }
 }
