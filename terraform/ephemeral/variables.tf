@@ -34,3 +34,20 @@ variable "private_subnet_cidrs" {
   type        = list(string)
   default     = ["10.0.101.0/24", "10.0.102.0/24"]
 }
+
+variable "image_tag" {
+  description = "Tag of the order-service image in ECR to run"
+  type        = string
+}
+
+variable "desired_count" {
+  description = "Number of order-service tasks to run (0 = service created but idle)"
+  type        = number
+  default     = 0
+}
+
+variable "event_bus_name" {
+  description = "Name of the EventBridge bus the order-service publishes to"
+  type        = string
+  default     = "orderflow-orders-bus"
+}
