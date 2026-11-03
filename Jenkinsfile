@@ -31,6 +31,18 @@ pipeline {
             }
         }
 
+        stage('SAST (Semgrep)') {
+            steps {
+                sh 'semgrep scan --config p/java --config p/python --metrics=off services terraform/core/lambda'
+            }
+        }
+
+        stage('IaC scan (Checkov)') {
+            steps {
+                sh 'checkov -d terraform --framework terraform --soft-fail --compact --quiet'
+            }
+        }
+
         stage('Docker build') {
             steps {
                 dir('services/order-service') {
