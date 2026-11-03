@@ -39,7 +39,7 @@ pipeline {
 
         stage('IaC scan (Checkov)') {
             steps {
-                sh 'checkov -d terraform --framework terraform --soft-fail --compact --quiet'
+                sh 'checkov -d terraform --framework terraform --config-file terraform/.checkov.yaml --soft-fail --compact --quiet'
             }
         }
 
