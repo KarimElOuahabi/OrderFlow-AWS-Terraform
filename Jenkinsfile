@@ -1,5 +1,8 @@
 pipeline {
     agent any
+    parameters {
+        booleanParam(name: 'DEPLOY', defaultValue: false, description: 'Push the image to ECR and update ECS')
+    }
 
     stages {
         stage('Check tools') {
@@ -63,6 +66,35 @@ pipeline {
                       --scanners vuln --severity HIGH,CRITICAL --exit-code 1 --timeout 15m
                     rm -f "$WORKSPACE/order-service-ci.tar"
                 '''
+            }
+        }
+
+        stage('Push to ECR') {
+            when { expression { params.DEPLOY } }
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'aws-deployer',
+                        usernameVariable: 'AWS_ACCESS_KEY_ID',
+                        passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    sh '''
+                        REGISTRY=578109959706.dkr.ecr.us-east-1.amazonaws.com
+                        aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $REGISTRY
+                        docker tag order-service:ci $REGISTRY/orderflow-order-service:latest
+                        docker push $REGISTRY/orderflow-order-service:latest
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy to ECS') {
+            when { expression { params.DEPLOY } }
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'aws-deployer',
+                        usernameVariable: 'AWS_ACCESS_KEY_ID',
+                        passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    sh '''
+                        aws ecs update-service --cluster orderflow-cluster --service order-service --force-new-deployment --region us-east-1
+                    '''
+                }
             }
         }
     }
