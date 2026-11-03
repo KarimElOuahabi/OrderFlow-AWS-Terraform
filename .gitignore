@@ -4,6 +4,7 @@
 *.tfstate.*
 *.tfvars
 crash.log
+processor.zip
 
 # IDE
 .idea/
