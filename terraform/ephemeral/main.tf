@@ -95,7 +95,7 @@ resource "aws_route_table_association" "private" {
 
 resource "aws_ecr_repository" "order_service" {
   name                 = "${var.project_name}-order-service"
-  image_tag_mutability = "IMMUTABLE"
+  image_tag_mutability = "MUTABLE"
   force_delete         = true
 
   image_scanning_configuration {
