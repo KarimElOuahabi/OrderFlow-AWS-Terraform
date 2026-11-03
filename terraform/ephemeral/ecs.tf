@@ -127,6 +127,7 @@ resource "aws_ecs_task_definition" "order_service" {
         { name = "SPRING_DATASOURCE_USERNAME", value = aws_db_instance.db.username },
         { name = "ORDERFLOW_AWS_REGION", value = var.aws_region },
         { name = "ORDERFLOW_EVENTBRIDGE_BUS_NAME", value = var.event_bus_name },
+        { name = "COGNITO_ISSUER_URI", value = data.terraform_remote_state.core.outputs.issuer_uri },
       ]
 
       # application.yaml reads the password from ${DATABASE_PASSWORD}.

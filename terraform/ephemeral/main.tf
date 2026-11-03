@@ -151,3 +151,13 @@ resource "aws_db_instance" "db" {
     Name = "${var.project_name}-db"
   }
 }
+
+data "terraform_remote_state" "core" {
+  backend = "s3"
+
+  config = {
+    bucket = "orderflow-terraform-state-${data.aws_caller_identity.current.account_id}"
+    key    = "core/terraform.tfstate"
+    region = var.aws_region
+  }
+}
