@@ -65,3 +65,72 @@ resource "aws_lambda_event_source_mapping" "order_created" {
   batch_size       = 5
   enabled          = false
 }
+
+resource "aws_iam_role" "notify" {
+  name = "${var.project_name}-notify"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "lambda.amazonaws.com" }
+      Action    = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "notify_logs" {
+  role       = aws_iam_role.notify.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+resource "aws_iam_role_policy" "notify" {
+  name = "queue-and-ses-access"
+  role = aws_iam_role.notify.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:GetQueueAttributes"]
+        Resource = aws_sqs_queue.notify.arn
+      },
+      {
+        Effect    = "Allow"
+        Action    = ["ses:SendEmail"]
+        Resource  = "*"
+        Condition = { StringEquals = { "ses:FromAddress" = var.sender_email } }
+      }
+    ]
+  })
+}
+
+data "archive_file" "notify" {
+  type        = "zip"
+  source_file = "${path.module}/lambda/notify.py"
+  output_path = "${path.module}/lambda/notify.zip"
+}
+
+resource "aws_lambda_function" "notify" {
+  function_name    = "${var.project_name}-notify"
+  role             = aws_iam_role.notify.arn
+  runtime          = "python3.12"
+  handler          = "notify.handler"
+  filename         = data.archive_file.notify.output_path
+  source_code_hash = data.archive_file.notify.output_base64sha256
+  timeout          = 10
+
+  environment {
+    variables = {
+      SENDER_EMAIL = var.sender_email
+    }
+  }
+}
+
+resource "aws_lambda_event_source_mapping" "notify" {
+  event_source_arn = aws_sqs_queue.notify.arn
+  function_name    = aws_lambda_function.notify.arn
+  batch_size       = 5
+  enabled          = false
+}

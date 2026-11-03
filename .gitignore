@@ -5,6 +5,7 @@
 *.tfvars
 crash.log
 processor.zip
+notify.zip
 
 # IDE
 .idea/

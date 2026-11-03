@@ -9,3 +9,8 @@ variable "project_name" {
   type        = string
   default     = "orderflow"
 }
+
+variable "sender_email" {
+  type        = string
+  description = "Verified SES address the notification emails are sent from"
+}
