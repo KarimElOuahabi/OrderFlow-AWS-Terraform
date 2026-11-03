@@ -22,6 +22,9 @@ public class OrderJpaEntity {
     @Column(name = "customer_id", nullable = false)
     private String customerId;
 
+    @Column(name = "customer_email")
+    private String customerEmail;
+
     @Column(name = "total_amount", nullable = false, precision = 12, scale = 2)
     private BigDecimal totalAmount;
 
@@ -35,10 +38,11 @@ public class OrderJpaEntity {
     protected OrderJpaEntity() {
     }
 
-    public OrderJpaEntity(UUID id, String customerId, BigDecimal totalAmount,
+    public OrderJpaEntity(UUID id, String customerId, String customerEmail, BigDecimal totalAmount,
                           OrderStatus status, Instant createdAt) {
         this.id = id;
         this.customerId = customerId;
+        this.customerEmail = customerEmail;
         this.totalAmount = totalAmount;
         this.status = status;
         this.createdAt = createdAt;
@@ -46,6 +50,7 @@ public class OrderJpaEntity {
 
     public UUID getId() { return id; }
     public String getCustomerId() { return customerId; }
+    public String getCustomerEmail() { return customerEmail; }
     public BigDecimal getTotalAmount() { return totalAmount; }
     public OrderStatus getStatus() { return status; }
     public Instant getCreatedAt() { return createdAt; }

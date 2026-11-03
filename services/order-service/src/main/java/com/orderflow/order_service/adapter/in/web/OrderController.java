@@ -26,7 +26,7 @@ public class OrderController {
     public OrderResponse create(@AuthenticationPrincipal Jwt jwt,
                                 @RequestBody CreateOrderRequest request) {
         Order order = createOrderUseCase.createOrder(
-                jwt.getSubject(), request.totalAmount());
+                jwt.getSubject(), jwt.getClaimAsString("email"), request.totalAmount());
         return OrderResponse.from(order);
     }
 }

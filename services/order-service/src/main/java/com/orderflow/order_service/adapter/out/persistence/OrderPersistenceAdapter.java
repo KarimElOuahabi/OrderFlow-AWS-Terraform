@@ -29,11 +29,11 @@ public class OrderPersistenceAdapter implements OrderRepository {
 
     private OrderJpaEntity toEntity(Order order) {
         return new OrderJpaEntity(order.getId(), order.getCustomerId(),
-                order.getTotalAmount(), order.getStatus(), order.getCreatedAt());
+                order.getCustomerEmail(), order.getTotalAmount(), order.getStatus(), order.getCreatedAt());
     }
 
     private Order toDomain(OrderJpaEntity entity) {
         return new Order(entity.getId(), entity.getCustomerId(),
-                entity.getTotalAmount(), entity.getStatus(), entity.getCreatedAt());
+                entity.getCustomerEmail(), entity.getTotalAmount(), entity.getStatus(), entity.getCreatedAt());
     }
 }

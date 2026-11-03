@@ -21,8 +21,8 @@ public class OrderService implements CreateOrderUseCase {
 
     @Override
     @Transactional
-    public Order createOrder(String customerId, BigDecimal orderAmount) {
-        Order order = Order.create(customerId, orderAmount);
+    public Order createOrder(String customerId, String customerEmail, BigDecimal orderAmount) {
+        Order order = Order.create(customerId, customerEmail, orderAmount);
         Order saved = orderRepository.save(order);
         outbox.saveOrderCreated(saved);
         return saved;

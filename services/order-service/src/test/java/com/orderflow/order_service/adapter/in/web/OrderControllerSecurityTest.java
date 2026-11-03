@@ -2,6 +2,7 @@ package com.orderflow.order_service.adapter.in.web;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -46,8 +47,21 @@ class OrderControllerSecurityTest {
     }
 
     @Test
-    void createOrder_withToken_returns201_andUsesSubjectAsCustomerId() throws Exception {
-        when(createOrderUseCase.createOrder(any(), any())).thenReturn(mock(Order.class));
+    void createOrder_withToken_returns201_andUsesSubjectAsCustomerId_andEmailClaim() throws Exception {
+        when(createOrderUseCase.createOrder(any(), any(), any())).thenReturn(mock(Order.class));
+
+        mockMvc.perform(post("/orders")
+                        .with(jwt().jwt(j -> j.subject("user-123").claim("email", "user@example.com")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(BODY))
+                .andExpect(status().isCreated());
+
+        verify(createOrderUseCase).createOrder(eq("user-123"), eq("user@example.com"), eq(new BigDecimal("25.50")));
+    }
+
+    @Test
+    void createOrder_withTokenWithoutEmail_returns201_andPassesNullEmail() throws Exception {
+        when(createOrderUseCase.createOrder(any(), any(), any())).thenReturn(mock(Order.class));
 
         mockMvc.perform(post("/orders")
                         .with(jwt().jwt(j -> j.subject("user-123")))
@@ -55,6 +69,6 @@ class OrderControllerSecurityTest {
                         .content(BODY))
                 .andExpect(status().isCreated());
 
-        verify(createOrderUseCase).createOrder(eq("user-123"), eq(new BigDecimal("25.50")));
+        verify(createOrderUseCase).createOrder(eq("user-123"), isNull(), eq(new BigDecimal("25.50")));
     }
 }

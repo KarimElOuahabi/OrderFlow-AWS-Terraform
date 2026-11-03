@@ -40,10 +40,16 @@ public class OutboxPersistenceAdapter implements OutboxPort {
 
     private String toJson(Order order) {
         return """
-                {"orderId":"%s","customerId":"%s","totalAmount":%s,"status":"%s","createdAt":"%s"}"""
+                {"orderId":"%s","customerId":"%s","customerEmail":%s,"totalAmount":%s,"status":"%s","createdAt":"%s"}"""
                 .formatted(order.getId(), escape(order.getCustomerId()),
+                        toJsonString(order.getCustomerEmail()),
                         order.getTotalAmount().toPlainString(),
                         order.getStatus(), order.getCreatedAt());
+    }
+
+    // A missing value is written as JSON null, not as a quoted string.
+    private String toJsonString(String value) {
+        return value == null ? "null" : "\"" + escape(value) + "\"";
     }
 
     private String escape(String value) {
