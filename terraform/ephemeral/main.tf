@@ -8,6 +8,15 @@ resource "aws_vpc" "main" {
   }
 }
 
+# Empty on purpose: the VPC default security group allows nothing, so nothing uses it by accident.
+resource "aws_default_security_group" "default" {
+  vpc_id = aws_vpc.main.id
+
+  tags = {
+    Name = "${var.project_name}-default-sg"
+  }
+}
+
 resource "aws_subnet" "public" {
   count = length(var.public_subnet_cidrs)
 

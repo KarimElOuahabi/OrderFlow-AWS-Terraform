@@ -40,3 +40,28 @@ skip-check:
   # Cross-region replication and S3 access logging need extra buckets and storage (money).
   - CKV_AWS_144 # S3 cross-region replication
   - CKV_AWS_18 # S3 access logging
+
+  # Lambda: SQS-triggered retries and DLQs already exist, and code signing is overkill for a demo.
+  - CKV_AWS_115 # Lambda reserved concurrency limit
+  - CKV_AWS_116 # Lambda dead letter queue
+  - CKV_AWS_272 # Lambda code signing
+
+  # Ephemeral is destroyed the same day, and deletion protection would block the destroy.
+  - CKV_AWS_150 # ALB deletion protection
+  - CKV_AWS_293 # RDS deletion protection
+  - CKV_AWS_226 # RDS automatic minor version upgrades
+  - CKV2_AWS_60 # RDS copy tags to snapshots
+
+  # No domain or certificate, so the ALB is HTTP only.
+  - CKV_AWS_131 # ALB drops invalid header fields
+  - CKV_AWS_378 # ALB target group uses HTTPS
+
+  # RDS extras cost money or add setup for a one-day demo.
+  - CKV_AWS_353 # RDS Performance Insights
+  - CKV_AWS_161 # RDS IAM authentication
+  - CKV_AWS_129 # RDS log exports to CloudWatch
+  - CKV2_AWS_30 # RDS query logging parameter group
+
+  # State bucket: no notifications needed, and a lifecycle rule risks expiring state versions.
+  - CKV2_AWS_62 # S3 event notifications
+  - CKV2_AWS_61 # S3 lifecycle configuration
