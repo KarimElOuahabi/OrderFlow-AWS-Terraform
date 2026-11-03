@@ -20,7 +20,9 @@ provider "aws" {
 
   default_tags {
     tags = {
-      Project = "orderflow"
+      "Project"   = "orderflow"
+      "ManagedBy" = "terraform"
+      "Stack"     = "ephemeral"
     }
   }
 }
