@@ -7,6 +7,10 @@ resource "aws_dynamodb_table" "tickets" {
   stream_enabled   = true
   stream_view_type = "NEW_IMAGE"
 
+  point_in_time_recovery {
+    enabled = true
+  }
+
   attribute {
     name = "ticket_id"
     type = "S"
@@ -38,11 +42,19 @@ resource "aws_iam_role_policy" "create_ticket" {
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [{
-      Effect   = "Allow"
-      Action   = ["dynamodb:PutItem"]
-      Resource = aws_dynamodb_table.tickets.arn
-    }]
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["dynamodb:PutItem"]
+        Resource = aws_dynamodb_table.tickets.arn
+      },
+      {
+        # X-Ray write actions do not support resource-level permissions.
+        Effect   = "Allow"
+        Action   = ["xray:PutTraceSegments", "xray:PutTelemetrySegments"]
+        Resource = "*"
+      }
+    ]
   })
 }
 
@@ -60,6 +72,10 @@ resource "aws_lambda_function" "create_ticket" {
   filename         = data.archive_file.create_ticket.output_path
   source_code_hash = data.archive_file.create_ticket.output_base64sha256
   timeout          = 10
+
+  tracing_config {
+    mode = "Active"
+  }
 
   environment {
     variables = {
@@ -101,10 +117,29 @@ resource "aws_apigatewayv2_route" "create_ticket" {
   authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
 }
 
+resource "aws_cloudwatch_log_group" "tickets_api" {
+  name              = "/aws/apigateway/${var.project_name}-tickets"
+  retention_in_days = 14
+}
+
 resource "aws_apigatewayv2_stage" "default" {
   api_id      = aws_apigatewayv2_api.tickets.id
   name        = "$default"
   auto_deploy = true
+
+  access_log_settings {
+    destination_arn = aws_cloudwatch_log_group.tickets_api.arn
+    format = jsonencode({
+      requestId      = "$context.requestId"
+      ip             = "$context.identity.sourceIp"
+      requestTime    = "$context.requestTime"
+      httpMethod     = "$context.httpMethod"
+      routeKey       = "$context.routeKey"
+      status         = "$context.status"
+      protocol       = "$context.protocol"
+      responseLength = "$context.responseLength"
+    })
+  }
 }
 
 resource "aws_lambda_permission" "create_ticket_api" {
@@ -169,7 +204,13 @@ resource "aws_iam_role_policy" "triage" {
           [for region in ["us-east-1", "us-east-2", "us-west-2"] :
           "arn:aws:bedrock:${region}::foundation-model/${replace(var.triage_model_id, "/^(us|eu|apac|global)[.]/", "")}"],
         )
-      }
+      },
+      {
+        # X-Ray write actions do not support resource-level permissions.
+        Effect   = "Allow"
+        Action   = ["xray:PutTraceSegments", "xray:PutTelemetrySegments"]
+        Resource = "*"
+      },
     ]
   })
 }
@@ -188,6 +229,10 @@ resource "aws_lambda_function" "triage" {
   filename         = data.archive_file.triage.output_path
   source_code_hash = data.archive_file.triage.output_base64sha256
   timeout          = 30
+
+  tracing_config {
+    mode = "Active"
+  }
 
   environment {
     variables = {
@@ -240,11 +285,19 @@ resource "aws_iam_role_policy" "approve_ticket" {
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [{
-      Effect   = "Allow"
-      Action   = ["dynamodb:UpdateItem"]
-      Resource = aws_dynamodb_table.tickets.arn
-    }]
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["dynamodb:UpdateItem"]
+        Resource = aws_dynamodb_table.tickets.arn
+      },
+      {
+        # X-Ray write actions do not support resource-level permissions.
+        Effect   = "Allow"
+        Action   = ["xray:PutTraceSegments", "xray:PutTelemetrySegments"]
+        Resource = "*"
+      }
+    ]
   })
 }
 
@@ -262,6 +315,10 @@ resource "aws_lambda_function" "approve_ticket" {
   filename         = data.archive_file.approve_ticket.output_path
   source_code_hash = data.archive_file.approve_ticket.output_base64sha256
   timeout          = 10
+
+  tracing_config {
+    mode = "Active"
+  }
 
   environment {
     variables = {

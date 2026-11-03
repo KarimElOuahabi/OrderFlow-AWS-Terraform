@@ -16,6 +16,7 @@ resource "aws_security_group" "ecs_tasks" {
   vpc_id      = aws_vpc.main.id
 
   ingress {
+    description     = "order-service port from the ALB"
     from_port       = 8080
     to_port         = 8080
     protocol        = "tcp"
@@ -23,6 +24,7 @@ resource "aws_security_group" "ecs_tasks" {
   }
 
   egress {
+    description = "All outbound traffic"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"

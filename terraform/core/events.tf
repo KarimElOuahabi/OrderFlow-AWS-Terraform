@@ -14,11 +14,13 @@ resource "aws_cloudwatch_event_rule" "order_created" {
 
 resource "aws_sqs_queue" "order_created_dlq" {
   name                      = "${var.project_name}-order-created-dlq"
+  sqs_managed_sse_enabled   = true
   message_retention_seconds = 1209600
 }
 
 resource "aws_sqs_queue" "order_created" {
   name                       = "${var.project_name}-order-created"
+  sqs_managed_sse_enabled    = true
   visibility_timeout_seconds = 60
 
   redrive_policy = jsonencode({
@@ -52,11 +54,13 @@ resource "aws_cloudwatch_event_target" "order_created_to_sqs" {
 
 resource "aws_sqs_queue" "notify_dlq" {
   name                      = "${var.project_name}-notify-dlq"
+  sqs_managed_sse_enabled   = true
   message_retention_seconds = 1209600
 }
 
 resource "aws_sqs_queue" "notify" {
   name                       = "${var.project_name}-notify"
+  sqs_managed_sse_enabled    = true
   visibility_timeout_seconds = 60
 
   redrive_policy = jsonencode({

@@ -112,6 +112,7 @@ resource "aws_security_group" "db" {
   vpc_id      = aws_vpc.main.id
 
   ingress {
+    description     = "PostgreSQL from the ECS tasks"
     from_port       = 5432
     to_port         = 5432
     protocol        = "tcp"
@@ -119,6 +120,7 @@ resource "aws_security_group" "db" {
   }
 
   egress {
+    description = "All outbound traffic"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -136,6 +138,7 @@ resource "aws_db_instance" "db" {
   instance_class = "db.t3.micro"
 
   allocated_storage           = 20
+  storage_encrypted           = true
   db_name                     = "orderflow"
   username                    = "orderflow_admin"
   manage_master_user_password = true

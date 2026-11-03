@@ -32,7 +32,13 @@ resource "aws_iam_role_policy" "processor" {
         Effect   = "Allow"
         Action   = ["dynamodb:PutItem"]
         Resource = aws_dynamodb_table.processed_events.arn
-      }
+      },
+      {
+        # X-Ray write actions do not support resource-level permissions.
+        Effect   = "Allow"
+        Action   = ["xray:PutTraceSegments", "xray:PutTelemetrySegments"]
+        Resource = "*"
+      },
     ]
   })
 }
@@ -51,6 +57,10 @@ resource "aws_lambda_function" "processor" {
   filename         = data.archive_file.processor.output_path
   source_code_hash = data.archive_file.processor.output_base64sha256
   timeout          = 10
+
+  tracing_config {
+    mode = "Active"
+  }
 
   environment {
     variables = {
@@ -101,7 +111,13 @@ resource "aws_iam_role_policy" "notify" {
         Action    = ["ses:SendEmail"]
         Resource  = "*"
         Condition = { StringEquals = { "ses:FromAddress" = var.sender_email } }
-      }
+      },
+      {
+        # X-Ray write actions do not support resource-level permissions.
+        Effect   = "Allow"
+        Action   = ["xray:PutTraceSegments", "xray:PutTelemetrySegments"]
+        Resource = "*"
+      },
     ]
   })
 }
@@ -120,6 +136,10 @@ resource "aws_lambda_function" "notify" {
   filename         = data.archive_file.notify.output_path
   source_code_hash = data.archive_file.notify.output_base64sha256
   timeout          = 10
+
+  tracing_config {
+    mode = "Active"
+  }
 
   environment {
     variables = {

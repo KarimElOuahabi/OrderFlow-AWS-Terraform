@@ -1,0 +1,42 @@
+framework:
+  - terraform
+
+skip-check:
+  # KMS customer-managed keys cost money per key and per request; AWS-managed encryption is used.
+  - CKV_AWS_119 # DynamoDB table encrypted with a CMK
+  - CKV_AWS_145 # S3 bucket encrypted with a CMK
+  - CKV_AWS_136 # ECR repository encrypted with a CMK
+  - CKV_AWS_158 # CloudWatch log group encrypted with a CMK
+  - CKV_AWS_173 # Lambda environment variables encrypted with a CMK
+  - CKV_AWS_354 # RDS Performance Insights encrypted with a CMK
+
+  # Lambdas run outside a VPC; a VPC needs NAT or endpoints to reach AWS APIs, which cost money.
+  - CKV_AWS_117 # Lambda inside a VPC
+
+  # The demo VPC has no NAT gateway or interface endpoints (money), so tasks use public subnets.
+  - CKV_AWS_130 # Subnet assigns public IPs on launch
+  - CKV_AWS_333 # ECS service assigns public IPs
+  - CKV_AWS_382 # Security group allows all egress (needed to reach ECR and AWS APIs)
+
+  # Flow logs cost money for a short-lived demo VPC.
+  - CKV2_AWS_11 # VPC flow logging
+
+  # HTTPS on the ALB needs a domain and certificate, which the demo does not have.
+  - CKV_AWS_2 # ALB listener uses HTTPS
+  - CKV_AWS_103 # ALB listener uses TLS 1.2
+  - CKV2_AWS_20 # ALB redirects HTTP to HTTPS
+  - CKV_AWS_260 # Security group allows 0.0.0.0/0 on port 80 (public HTTP listener)
+
+  # WAF, ALB access logs, container insights and Multi-AZ/monitoring all add recurring cost.
+  - CKV2_AWS_28 # ALB protected by WAF
+  - CKV_AWS_91 # ALB access logging (needs an S3 bucket)
+  - CKV_AWS_65 # ECS cluster Container Insights
+  - CKV_AWS_157 # RDS Multi-AZ
+  - CKV_AWS_118 # RDS enhanced monitoring
+
+  # Log retention of one year costs money; short retention is enough for the demo.
+  - CKV_AWS_338 # CloudWatch log group retention of at least one year
+
+  # Cross-region replication and S3 access logging need extra buckets and storage (money).
+  - CKV_AWS_144 # S3 cross-region replication
+  - CKV_AWS_18 # S3 access logging
