@@ -65,3 +65,6 @@ skip-check:
   # State bucket: no notifications needed, and a lifecycle rule risks expiring state versions.
   - CKV2_AWS_62 # S3 event notifications
   - CKV2_AWS_61 # S3 lifecycle configuration
+
+  # latest is re-pushed on every demo deploy, so ECR tags must be mutable.
+  - CKV_AWS_51 # ECR image tags are immutable
