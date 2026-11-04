@@ -1,4 +1,4 @@
-# OrderFlow
+# OrderFlow-AWS-Terraform
 
 OrderFlow is a small event-driven order and support-ticket platform built to practice production-style cloud engineering on AWS. A Spring Boot `order-service` stores orders in Postgres and publishes `OrderCreated` events through a transactional outbox to EventBridge, where serverless consumers record them and send confirmation emails. A separate serverless tickets API lets authenticated customers open support tickets, which are triaged by an AI model on Amazon Bedrock and then approved by an admin.
 
@@ -22,7 +22,7 @@ The `order-service` also validates the Cognito JWT itself, and the customer id a
 ## Repository structure
 
 ```
-orderflow/
+OrderFlow-AWS-Terraform/
 ├── Jenkinsfile                  # CI/CD pipeline
 ├── services/
 │   └── order-service/           # Spring Boot service (domain, application, adapter, Flyway migrations, tests)
