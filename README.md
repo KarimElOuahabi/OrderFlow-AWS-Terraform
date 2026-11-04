@@ -4,62 +4,6 @@ OrderFlow is a small event-driven order and support-ticket platform built to pra
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    Client([Client])
-
-    subgraph ephemeral["ephemeral stack (demo only)"]
-        ALB[Application Load Balancer]
-        ECR[(ECR)]
-        subgraph ecs["ECS Fargate"]
-            OS[order-service]
-        end
-        RDS[(RDS Postgres)]
-    end
-
-    subgraph core["core stack (always on)"]
-        Cognito[Cognito user pool]
-        BUS{{EventBridge bus}}
-
-        subgraph orders["Order events"]
-            Q1[SQS processor queue]
-            DLQ1[processor DLQ]
-            Q2[SQS notify queue]
-            DLQ2[notify DLQ]
-            L1[processor Lambda]
-            L2[notify Lambda]
-            DDB1[(DynamoDB processed_events)]
-            SES[SES email]
-        end
-
-        subgraph tickets["Tickets API"]
-            APIGW[API Gateway HTTP API<br/>Cognito JWT authorizer]
-            L3[create-ticket Lambda]
-            DDB2[(DynamoDB tickets)]
-            L4[triage Lambda]
-            BR[Amazon Bedrock]
-            L5[approve-ticket Lambda]
-        end
-    end
-
-    Admin([Admin])
-
-    ECR -. image .-> OS
-    Client --> ALB --> OS --> RDS
-    Client -. sign in .-> Cognito
-    OS -- outbox relay --> BUS
-    BUS --> Q1 --> L1 --> DDB1
-    BUS --> Q2 --> L2 --> SES
-    Q1 -. after 3 failed receives .-> DLQ1
-    Q2 -. after 3 failed receives .-> DLQ2
-
-    Client --> APIGW --> L3 --> DDB2
-    Cognito -. validates JWT .-> APIGW
-    DDB2 -- stream, INSERT only --> L4 --> BR
-    L4 -- triage result --> DDB2
-    Admin --> APIGW --> L5 --> DDB2
-```
-
 The `order-service` also validates the Cognito JWT itself, and the customer id and email come from the token claims rather than the request body.
 
 ## Tech stack
