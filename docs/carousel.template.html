@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OrderFlow Carousel</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#fff}
+  body{font-family:Inter,"Segoe UI",system-ui,sans-serif;color:#0f1b2d}
+  #stage{position:relative;width:1080px;height:1350px;overflow:hidden;
+    background:radial-gradient(circle at 100% 0%,#fff1dc 0,transparent 38%),radial-gradient(circle at 0% 100%,#e6efff 0,transparent 42%),#fbfcff}
+  svg#edges{position:absolute;inset:0;pointer-events:none}
+  .chip{position:absolute;left:40px;top:34px;font-size:20px;font-weight:800;letter-spacing:2px;color:#a35a00;background:#fff1dc;border-radius:30px;padding:8px 20px}
+  h1{position:absolute;left:40px;top:84px;margin:0;font-size:56px;letter-spacing:-1px;line-height:1.05}
+  h1 b{color:#ff9900}
+  .sub{position:absolute;left:42px;top:152px;font-size:26px;color:#5b6b82}
+  .pg{position:absolute;right:40px;top:40px;font-size:22px;font-weight:700;color:#8a97ab}
+  .card{position:absolute;background:#fff;border-radius:24px;box-shadow:0 8px 24px rgba(20,40,80,.16);border-top:8px solid var(--c,#888);text-align:center;padding:50px 10px 10px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+  .card .ic{position:absolute;left:50%;top:-44px;transform:translateX(-50%);display:flex;gap:6px;background:#fff;border-radius:44px;min-width:84px;height:84px;align-items:center;justify-content:center;box-shadow:0 5px 16px rgba(20,40,80,.2);padding:0 14px}
+  .card .ic img{width:52px;height:52px;object-fit:contain}
+  .card .t{font-weight:800;font-size:30px;line-height:1.15}
+  .card .s{font-size:21px;color:#5b6b82;line-height:1.3;margin-top:6px}
+  .card.gate{border:3px dashed #e07b00;border-top:8px solid #e07b00}
+  .lbl{position:absolute;transform:translate(-50%,-50%);background:#fff;padding:3px 12px;border-radius:14px;font-size:19px;font-weight:600;color:#6b4a1a;border:2px solid #ecd9bb;white-space:nowrap}
+  .box{position:absolute;border-radius:24px;padding:26px 30px;font-size:25px;line-height:1.45;color:#33445c}
+  .box b{display:block;font-size:30px;color:#0f1b2d;margin-bottom:6px}
+  .pill{position:absolute;left:40px;width:1000px;height:176px;background:#fff;border-radius:26px;box-shadow:0 8px 24px rgba(20,40,80,.14);border-left:12px solid var(--c);padding:22px 30px 22px 170px;display:flex;flex-direction:column;justify-content:center}
+  .pill .ic{position:absolute;left:34px;top:46px;width:94px;height:94px;border-radius:50%;background:#fff;box-shadow:0 5px 16px rgba(20,40,80,.2);display:flex;align-items:center;justify-content:center}
+  .pill .ic img{width:56px;height:56px}
+  .pill b{font-size:34px;margin-bottom:6px}
+  .pill span{font-size:24px;color:#5b6b82;line-height:1.3}
+  .foot{position:absolute;left:40px;right:40px;bottom:30px;font-size:21px;color:#6b7a90}
+</style>
+</head>
+<body>
+<div id="stage">
+  <svg id="edges" width="1080" height="1350">
+    <defs>
+      <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#3d4b60"/></marker>
+      <marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#e07b00"/></marker>
+    </defs>
+  </svg>
+</div>
+<script>
+const ICONS = /*ICONS*/{}/*END*/;
+const NS='http://www.w3.org/2000/svg';
+const stage=document.getElementById('stage'), svg=document.getElementById('edges');
+const X=[40,390,740], W=300, H=170, Y=[270,530,790,1050];
+const G='#1f9d55', O='#e07b00', PK='#e11d74', BL='#3b48cc', RD='#d6293e';
+const N={};
+const el=(h,css)=>{const d=document.createElement('div');d.style.cssText=css||'';d.innerHTML=h;stage.appendChild(d);return d;};
+function card(id,col,row,icons,title,sub,color,gate){
+  const x=X[col],y=Y[row]; const d=document.createElement('div'); d.className='card'+(gate?' gate':'');
+  d.style.cssText=`left:${x}px;top:${y}px;width:${W}px;height:${H}px;--c:${color}`;
+  d.innerHTML=`<div class="ic">${[].concat(icons).map(k=>`<img src="${ICONS[k]}">`).join('')}</div><div class="t">${title}</div><div class="s">${sub}</div>`;
+  stage.appendChild(d); N[id]={x,y,w:W,h:H};
+}
+const anchor=(id,s)=>{const n=N[id];return {l:[n.x,n.y+n.h/2],r:[n.x+n.w,n.y+n.h/2],t:[n.x+n.w/2,n.y],b:[n.x+n.w/2,n.y+n.h]}[s];};
+function path(d,o){
+  const p=document.createElementNS(NS,'path');
+  p.setAttribute('d',d);p.setAttribute('fill','none');
+  p.setAttribute('stroke',o.dash?O:'#3d4b60');p.setAttribute('stroke-width','4');
+  if(o.dash)p.setAttribute('stroke-dasharray','12 9');
+  p.setAttribute('marker-end',`url(#${o.dash?'ao':'ah'})`);
+  svg.appendChild(p);
+}
+function label(t,x,y){const l=document.createElement('div');l.className='lbl';l.textContent=t;l.style.left=x+'px';l.style.top=y+'px';stage.appendChild(l);}
+function edge(a,sa,b,sb,o){
+  o=o||{}; const [x1,y1]=anchor(a,sa); let [x2,y2]=anchor(b,sb); let d,lx,ly;
+  if(sb==='t') y2-=48; /* stop above the icon badge so the arrowhead stays visible */
+  if(sa==='l'||sa==='r'){
+    if(Math.abs(y1-y2)<2){d=`M${x1},${y1}H${x2}`;lx=(x1+x2)/2;ly=y1;}
+    else{const m=o.mid??(x1+x2)/2;d=`M${x1},${y1}H${m}V${y2}H${x2}`;lx=m;ly=(y1+y2)/2;}
+  }else{
+    if(Math.abs(x1-x2)<2){d=`M${x1},${y1}V${y2}`;lx=x1;ly=(y1+y2)/2;}
+    else{const m=o.mid??(y1+y2)/2;d=`M${x1},${y1}V${m}H${x2}V${y2}`;lx=(x1+x2)/2;ly=m;}
+  }
+  path(d,o); if(o.label)label(o.label,o.lx??lx,o.ly??ly);
+}
+function header(chip,title,sub,pg){
+  el(chip,'').className='chip';
+  const h=el(title,'');h.outerHTML;h.remove();
+  const t=document.createElement('h1');t.innerHTML=title;stage.appendChild(t);
+  const s=document.createElement('div');s.className='sub';s.textContent=sub;stage.appendChild(s);
+  const p=document.createElement('div');p.className='pg';p.textContent=pg+' / 5';stage.appendChild(p);
+}
+function foot(t){const f=document.createElement('div');f.className='foot';f.textContent=t;stage.appendChild(f);}
+
+const slides={
+1(){
+  header('CI · JENKINS','OrderFlow · <b>DevSecOps</b>','Every push runs through four security gates before it ships','1');
+  card('dev',0,0,'person','Developer','git push','#5a6b85');
+  card('git',1,0,['github','gitlab'],'Git remotes','GitHub · GitLab','#f05133');
+  card('build',2,0,['jenkins','maven'],'Build &amp; test','Maven · 20 tests pass',RD);
+  card('leaks',2,1,'gitleaks','Gitleaks','secret scan · 0 leaks',G);
+  card('sem',1,1,'semgrep','Semgrep','SAST · 211 rules<br>0 findings',G);
+  card('chk',0,1,'checkov','Checkov','IaC scan<br>skips documented',G);
+  card('dock',0,2,'docker','Docker build','order-service image','#2496ed');
+  card('trivy',1,2,'trivy','Trivy','image scan<br>0 HIGH / CRITICAL',G);
+  card('push',2,2,'ecr','Push to ECR','ecr login + docker push',O,true);
+  card('depl',2,3,'ecs','Deploy to ECS','update-service<br>force new rollout',O,true);
+  edge('dev','r','git','l'); edge('git','r','build','l'); edge('build','b','leaks','t');
+  edge('leaks','l','sem','r'); edge('sem','l','chk','r'); edge('chk','b','dock','t');
+  edge('dock','r','trivy','l'); edge('trivy','r','push','l',{dash:1}); edge('push','b','depl','t',{dash:1});
+  const b=el('<b>Gated deploy</b>Dashed steps run only when the DEPLOY checkbox is ticked (off by default). Checkov exceptions are documented with a reason for each.','left:40px;top:1050px;width:650px;height:170px;background:#fff1dc;border:3px dashed #e8b36b');
+  b.className='box';
+  foot('Jenkins runs in Docker Compose · declarative Jenkinsfile');
+},
+2(){
+  header('AWS · EPHEMERAL STACK','Container <b>runtime</b>','Applied for the demo, destroyed the same day','2');
+  card('jen',0,0,'jenkins','Jenkins','push + deploy stages',RD);
+  card('ecr',2,0,'ecr','ECR','container images<br>pulled by ECS',O);
+  card('cli',0,1,'cognito','Client','Cognito ID token','#5a6b85');
+  card('alb',1,1,'elb','ALB','HTTP listener<br>public entry','#8c4fff');
+  card('fg',2,1,'fargate','ECS Fargate','hexagonal Spring Boot<br>Cognito JWT',O);
+  card('rds',2,2,['rds','postgres'],'RDS','PostgreSQL<br>encrypted storage',BL);
+  edge('jen','r','ecr','l',{dash:1,label:'docker push'});
+  edge('ecr','b','fg','t');
+  edge('cli','r','alb','l'); edge('alb','r','fg','l'); edge('fg','b','rds','t');
+  const b=el('<b>Why ephemeral?</b>VPC, RDS, ECR, ALB and ECS are applied for the demo and destroyed the same day. No NAT gateway. The always-on core stays serverless and pay per use.','left:40px;top:790px;width:650px;height:260px;background:#efeafd;border:3px dashed #b9a6f0');
+  b.className='box';
+  foot('Provisioned with Terraform · us-east-1');
+},
+3(){
+  header('AWS · CORE STACK','Order <b>events</b>','The outbox relay publishes OrderCreated and fans out through SQS','3');
+  card('fg',0,0,'fargate','ECS Fargate','outbox relay',O);
+  card('eb',1,0,'eventbridge','EventBridge','orders bus<br>OrderCreated rule',PK);
+  card('sqsP',0,1,'sqs','SQS queue','processor + DLQ<br>SSE enabled',PK);
+  card('sqsN',2,1,'sqs','SQS queue','notify + DLQ<br>SSE enabled',PK);
+  card('lamP',0,2,['lambda','python'],'Lambda','processor (Python)<br>X-Ray tracing',O);
+  card('lamN',2,2,['lambda','python'],'Lambda','notify (Python)<br>X-Ray tracing',O);
+  card('ddb',0,3,'dynamodb','DynamoDB','processed_events<br>PITR enabled',BL);
+  card('ses',2,3,'ses','SES','customer email<br>on OrderCreated',RD);
+  edge('fg','r','eb','l');
+  edge('eb','b','sqsP','t'); edge('eb','b','sqsN','t');
+  edge('sqsP','b','lamP','t'); edge('sqsN','b','lamN','t');
+  edge('lamP','b','ddb','t'); edge('lamN','b','ses','t');
+  const b=el('<b>Two consumers</b>Each with its own dead-letter queue and encryption at rest.','left:390px;top:790px;width:300px;height:300px;background:#fff3e3;border:3px dashed #f0b872');
+  b.className='box';
+  foot('Serverless · always on · pay per use');
+},
+4(){
+  header('AWS · CORE STACK','AI ticket <b>triage</b>','AI suggests, a human approves','4');
+  card('api',0,0,'apigw','API Gateway','HTTP API<br>Cognito JWT auth',PK);
+  card('crt',1,0,'lambda','Lambda','create-ticket<br>POST /tickets',O);
+  card('tix',1,1,'dynamodb','DynamoDB','tickets table<br>NEW_IMAGE stream',BL);
+  card('apr',2,1,'lambda','Lambda','approve · admin only<br>conditional update',O);
+  card('tri',0,1,'lambda','Lambda','triage<br>INSERT-only trigger',O);
+  card('bed',0,2,'bedrock','Bedrock','Claude Haiku<br>category + priority','#01a88d');
+  edge('api','r','crt','l'); edge('crt','b','tix','t');
+  edge('tix','l','tri','r');
+  edge('tri','b','bed','t');
+  edge('apr','l','tix','r');
+  const b=el('<b>Guardrails</b>AI output is checked against allow-lists, then held for admin approval. Only admins can approve a ticket.','left:390px;top:790px;width:650px;height:200px;background:#e5f8f2;border:3px dashed #7dd3bd');
+  b.className='box';
+  const s=el('<b>How it works</b>1. A user creates a ticket<br>2. Bedrock suggests category and priority<br>3. An admin approves it','left:40px;top:1030px;width:1000px;height:210px;background:#fff;border:3px solid #e1e8f3');
+  s.className='box';
+  foot('Claude Haiku on Amazon Bedrock');
+},
+5(){
+  header('BUILT IN','Security &amp; <b>operations</b>','What keeps OrderFlow safe and cheap to run','5');
+  const P=[
+   ['Identity','Cognito JWT on the API and order-service. Approve is admin only.',RD,'cognito'],
+   ['Encryption and tracing','SQS SSE, DynamoDB PITR, X-Ray on all five Lambdas.',RD,'xray'],
+   ['Shift-left scanning','Gitleaks, Semgrep, Checkov and Trivy on every build.',G,'trivy'],
+   ['Infrastructure as code','Terraform stacks: bootstrap, core, ephemeral. S3 remote state with native locking.','#7b42bc','terraform'],
+   ['Cost control','Ephemeral stack destroyed the same day. No NAT gateway.','#7aa116','s3'],
+  ];
+  P.forEach((p,i)=>{
+    const d=document.createElement('div');d.className='pill';d.style.cssText=`top:${230+i*204}px;--c:${p[2]}`;
+    d.innerHTML=`<div class="ic"><img src="${ICONS[p[3]]}"></div><b>${p[0]}</b><span>${p[1]}</span>`;
+    stage.appendChild(d);
+  });
+  foot('OrderFlow · Jenkins · Terraform · AWS');
+}};
+const n=+(new URLSearchParams(location.search).get('s')||1);
+document.querySelectorAll('.chip').forEach(()=>{});
+slides[n]();
+document.title='OrderFlow slide '+n;
+</script>
+</body>
+</html>

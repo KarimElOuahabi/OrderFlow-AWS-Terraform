@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OrderFlow Architecture</title>
+<style>
+  :root{
+    --bg:#f5f8fd; --ink:#0f1b2d; --muted:#5b6b82; --line:#3d4b60;
+    --jenkins:#e8f0fe; --core:#fff3e3; --eph:#efeafd;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);font-family:Inter,"Segoe UI",system-ui,sans-serif;color:var(--ink)}
+  #wrap{overflow:auto;padding:16px}
+  #stage{position:relative;width:1600px;height:1420px;margin:0 auto;background:#fff;border-radius:24px;box-shadow:0 8px 40px rgba(20,40,80,.10)}
+  svg#edges{position:absolute;inset:0;pointer-events:none}
+  h1{position:absolute;left:44px;top:26px;margin:0;font-size:40px;letter-spacing:-.5px}
+  h1 b{color:#ff9900}
+  .sub{position:absolute;left:46px;top:80px;font-size:17px;color:var(--muted)}
+  .tag{position:absolute;right:44px;top:34px;text-align:right;font-size:13px;color:var(--muted);line-height:1.8}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle}
+  .zone{position:absolute;border-radius:22px;border:2px dashed;padding:14px 22px}
+  .zone .zt{font-size:13px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;display:flex;align-items:center;gap:10px}
+  .zone .zt img{height:26px}
+  .z-j{background:var(--jenkins);border-color:#9db8ee}.z-j .zt{color:#2c4f99;justify-content:flex-end}
+  .z-c{background:var(--core);border-color:#f0b872}.z-c .zt{color:#a35a00}
+  .z-e{background:var(--eph);border-color:#b9a6f0}.z-e .zt{color:#5b3cc4}
+  .region{position:absolute;left:44px;top:508px;font-size:13px;font-weight:700;letter-spacing:1.2px;color:#8a97ab;display:flex;align-items:center;gap:10px}
+  .region img{height:22px}
+  .card{position:absolute;background:#fff;border-radius:16px;box-shadow:0 4px 14px rgba(20,40,80,.14);border-top:5px solid var(--c,#888);text-align:center;padding:34px 8px 8px}
+  .card .ic{position:absolute;left:50%;top:-28px;transform:translateX(-50%);display:flex;gap:4px;background:#fff;border-radius:50%;min-width:52px;height:52px;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(20,40,80,.18);padding:0 8px}
+  .card .ic img{width:30px;height:30px;object-fit:contain}
+  .card .t{font-weight:700;font-size:14px;line-height:1.2}
+  .card .s{font-size:11.5px;color:var(--muted);line-height:1.35;margin-top:3px}
+  .card.gate{border:2px dashed #e07b00;border-top:5px solid #e07b00}
+  .lbl{position:absolute;transform:translate(-50%,-50%);background:#fff;padding:1px 7px;border-radius:9px;font-size:11px;color:#6b4a1a;border:1px solid #ecd9bb;white-space:nowrap}
+  .note{position:absolute;font-size:12.5px;line-height:1.5;color:var(--muted)}
+  .note b{display:block;color:#a35a00;font-size:12.5px;letter-spacing:1px;margin-bottom:4px}
+  .pill{position:absolute;background:#fff;border-radius:18px;box-shadow:0 4px 14px rgba(20,40,80,.12);border-top:5px solid var(--c);padding:36px 14px 10px;text-align:center;font-size:12px;color:var(--muted);line-height:1.4}
+  .pill b{display:block;color:var(--ink);font-size:14px;margin-bottom:3px}
+  .pill .ic{position:absolute;left:50%;top:-26px;transform:translateX(-50%);width:50px;height:50px;border-radius:50%;background:#fff;box-shadow:0 3px 10px rgba(20,40,80,.18);display:flex;align-items:center;justify-content:center;font-size:24px}
+  .foot{position:absolute;left:46px;bottom:26px;font-size:13px;color:var(--muted)}
+  .sect{position:absolute;left:46px;font-size:13px;font-weight:700;letter-spacing:1.2px;color:#8a97ab}
+</style>
+</head>
+<body>
+<div id="wrap"><div id="stage">
+  <h1>OrderFlow · <b>DevSecOps</b> on AWS</h1>
+  <div class="sub">Jenkins CI with built-in security scanning, Terraform-provisioned serverless and container runtime</div>
+  <div class="tag"><span class="dot" style="background:#1f9d55"></span>green: security scan stage<br><span class="dot" style="background:#e07b00"></span>dashed: runs only when DEPLOY is ticked</div>
+
+  <div class="zone z-j" style="left:40px;top:255px;width:1520px;height:215px"><div class="zt"><img data-i="jenkins"> Jenkins · Docker Compose · Declarative Jenkinsfile · dashed = gated by DEPLOY (off by default)</div></div>
+  <div class="region"><img data-i="terraform"> AWS · us-east-1 · provisioned with Terraform</div>
+  <div class="zone z-c" style="left:40px;top:540px;width:980px;height:640px"><div class="zt"><img data-i="lambda"> Core stack · serverless, always on, pay per use</div></div>
+  <div class="zone z-e" style="left:1050px;top:540px;width:510px;height:640px"><div class="zt"><img data-i="ecs"> Ephemeral stack · applied for the demo</div></div>
+
+  <div class="note" style="left:68px;top:610px;width:170px"><b>ORDER EVENTS</b>The outbox relay publishes OrderCreated. Two consumers fan out through SQS, each with its own DLQ.</div>
+  <div class="note" style="left:68px;top:876px;width:300px"><b>AI TICKET TRIAGE · HUMAN APPROVED</b></div>
+  <div class="note" style="left:830px;top:1052px;width:170px;font-style:italic">AI output is checked against allow-lists, then held for admin approval.</div>
+  <div class="note" style="left:1072px;top:1060px;width:290px"><b style="color:#5b3cc4">DESTROYED THE SAME DAY</b>VPC · RDS · ECR · ALB · ECS. No NAT gateway.</div>
+  <div style="position:absolute;left:60px;top:866px;width:940px;border-top:1px dashed #e3c79a"></div>
+
+  <div class="sect" style="top:1198px">SECURITY AND OPERATIONS BUILT IN</div>
+  <div class="foot">ECR push and ECS deploy are gated behind the DEPLOY checkbox and run during the real apply. Checkov exceptions are documented in terraform/.checkov.yaml with a reason for each.</div>
+
+  <svg id="edges" width="1600" height="1420">
+    <defs>
+      <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#3d4b60"/></marker>
+      <marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#e07b00"/></marker>
+    </defs>
+  </svg>
+</div></div>
+
+<script>
+const ICONS = /*ICONS*/{}/*END*/;
+const NS='http://www.w3.org/2000/svg';
+const stage=document.getElementById('stage'), svg=document.getElementById('edges');
+document.querySelectorAll('img[data-i]').forEach(i=>i.src=ICONS[i.dataset.i]);
+
+const N={};
+function card(id,x,y,w,icons,title,sub,color,gate){
+  const d=document.createElement('div'); d.className='card'+(gate?' gate':'');
+  d.style.cssText=`left:${x}px;top:${y}px;width:${w}px;height:100px;--c:${color}`;
+  d.innerHTML=`<div class="ic">${[].concat(icons).map(k=>`<img src="${ICONS[k]}">`).join('')}</div><div class="t">${title}</div><div class="s">${sub}</div>`;
+  stage.appendChild(d); N[id]={x,y,w,h:100};
+}
+function anchor(id,side){const n=N[id];return {l:[n.x,n.y+n.h/2],r:[n.x+n.w,n.y+n.h/2],t:[n.x+n.w/2,n.y],b:[n.x+n.w/2,n.y+n.h]}[side];}
+function edge(a,sa,b,sb,o={}){
+  o=o||{}; const [x1,y1]=anchor(a,sa),[x2,y2]=anchor(b,sb);
+  let d, lx, ly;
+  const horiz=(sa==='l'||sa==='r');
+  if(horiz){
+    if(Math.abs(y1-y2)<2){d=`M${x1},${y1}H${x2}`;lx=(x1+x2)/2;ly=y1;}
+    else{const m=o.mid??(x1+x2)/2;d=`M${x1},${y1}H${m}V${y2}H${x2}`;lx=m;ly=(y1+y2)/2;}
+  }else{
+    if(Math.abs(x1-x2)<2){d=`M${x1},${y1}V${y2}`;lx=x1;ly=(y1+y2)/2;}
+    else{const m=o.mid??(y1+y2)/2;d=`M${x1},${y1}V${m}H${x2}V${y2}`;lx=(x1+x2)/2;ly=m;}
+  }
+  const p=document.createElementNS(NS,'path');
+  p.setAttribute('d',d);p.setAttribute('fill','none');
+  p.setAttribute('stroke',o.dash?'#e07b00':'#3d4b60');p.setAttribute('stroke-width','2');
+  if(o.dash)p.setAttribute('stroke-dasharray','6 5');
+  p.setAttribute('marker-end',`url(#${o.dash?'ao':'ah'})`);
+  svg.appendChild(p);
+  if(o.label){const l=document.createElement('div');l.className='lbl';l.textContent=o.label;l.style.left=(o.lx??lx)+'px';l.style.top=(o.ly??ly)+'px';stage.appendChild(l);}
+}
+
+/* top row */
+card('dev',60,150,150,'person','Developer','git push','#5a6b85');
+card('git',270,150,170,['github','gitlab'],'Git remotes','GitHub · GitLab','#f05133');
+edge('dev','r','git','l');
+
+/* jenkins pipeline */
+const jy=330,G='#1f9d55';
+const J=[
+ ['build',['maven'],'Build &amp; test','Maven<br>20 tests pass','#d6293e'],
+ ['leaks',['gitleaks'],'Gitleaks','secret scan<br>0 leaks',G],
+ ['sem',['semgrep'],'Semgrep','SAST · 211 rules<br>0 findings',G],
+ ['chk',['checkov'],'Checkov','IaC scan<br>skips documented',G],
+ ['dock',['docker'],'Docker build','order-service<br>image','#2496ed'],
+ ['trivy',['trivy'],'Trivy','image scan<br>0 HIGH / CRITICAL',G],
+];
+J.forEach((c,i)=>card(c[0],60+i*190,jy,150,c[1],c[2],c[3],c[4]));
+card('push',1200,jy,150,['ecr'],'Push to ECR','ecr login<br>+ docker push','#e07b00',true);
+card('depl',1390,jy,150,['ecs'],'Deploy to ECS','update-service<br>force new rollout','#e07b00',true);
+edge('git','b','build','t',{label:'triggers the Jenkinsfile',mid:290,lx:300,ly:290});
+for(let i=0;i<5;i++)edge(J[i][0],'r',J[i+1][0],'l');
+edge('trivy','r','push','l',{dash:1}); edge('push','r','depl','l',{dash:1});
+
+/* core: order events */
+card('eb',830,677,150,'eventbridge','EventBridge','orders bus<br>OrderCreated rule','#e11d74');
+card('sqsP',640,610,150,'sqs','SQS queue','processor + DLQ<br>SSE enabled','#e11d74');
+card('sqsN',640,745,150,'sqs','SQS queue','notify + DLQ<br>SSE enabled','#e11d74');
+card('lamP',450,610,150,['lambda','python'],'Lambda','processor (Python)<br>X-Ray tracing','#e07b00');
+card('lamN',450,745,150,['lambda','python'],'Lambda','notify (Python)<br>X-Ray tracing','#e07b00');
+card('ddbP',260,610,150,'dynamodb','DynamoDB','processed_events<br>PITR enabled','#3b48cc');
+card('ses',260,745,150,'ses','SES','customer email<br>on OrderCreated','#d6293e');
+edge('eb','l','sqsP','r'); edge('eb','l','sqsN','r');
+edge('sqsP','l','lamP','r'); edge('sqsN','l','lamN','r');
+edge('lamP','l','ddbP','r'); edge('lamN','l','ses','r');
+
+/* core: AI triage */
+const ty=930;
+card('api',60,ty,150,'apigw','API Gateway','HTTP API<br>Cognito JWT auth','#e11d74');
+card('crt',250,ty,150,'lambda','Lambda','create-ticket<br>POST /tickets','#e07b00');
+card('tix',440,ty,150,'dynamodb','DynamoDB','tickets table<br>NEW_IMAGE stream','#3b48cc');
+card('tri',630,ty,150,'lambda','Lambda','triage<br>INSERT-only trigger','#e07b00');
+card('bed',820,ty,150,'bedrock','Bedrock','Claude Haiku<br>category + priority','#01a88d');
+card('apr',60,1062,150,'lambda','Lambda','approve<br>admin group only','#e07b00');
+edge('api','r','crt','l');edge('crt','r','tix','l');edge('tix','r','tri','l');edge('tri','r','bed','l');
+edge('api','b','apr','t',{label:'POST /tickets/{id}/approve',lx:200,ly:1046});
+edge('apr','r','tix','b',{label:'conditional update',mid:515,lx:560,ly:1112});
+
+/* ephemeral */
+card('ecr',1200,612,150,'ecr','ECR','container images','#e07b00');
+card('fg',1200,750,340,'fargate','ECS Fargate','order-service · hexagonal Spring Boot<br>Cognito JWT · outbox relay to EventBridge','#e07b00');
+card('rds',1200,910,150,['rds','postgres'],'RDS','PostgreSQL<br>encrypted storage','#3b48cc');
+card('alb',1390,910,150,'elb','ALB','HTTP listener<br>public entry','#8c4fff');
+card('cli',1390,1050,150,['cognito'],'Client','Cognito ID token','#5a6b85');
+edge('push','b','ecr','t',{dash:1,label:'docker push',ly:520});
+edge('depl','b','fg','t',{dash:1,label:'update-service',lx:1465,ly:610});
+edge('ecr','b','fg','t',{label:'pull image'});
+edge('fg','l','eb','r',{label:'outbox relay',lx:1015,ly:800});
+edge('fg','b','rds','t');
+edge('alb','t','fg','b');
+edge('cli','t','alb','b');
+
+/* bottom pills */
+const P=[
+ ['🔐','Identity','Cognito JWT on the API and order-service. Approve is admin only.','#d6293e','cognito'],
+ ['🔒','Encryption and tracing','SQS SSE, DynamoDB PITR, X-Ray on all five Lambdas.','#d6293e','xray'],
+ ['🛡️','Shift-left scanning','Gitleaks, Semgrep, Checkov and Trivy on every build.','#1f9d55','trivy'],
+ ['','Infrastructure as code','Terraform stacks: bootstrap, core, ephemeral. S3 remote state with native locking.','#7b42bc','terraform'],
+ ['','Cost control','Ephemeral stack destroyed the same day. No NAT gateway.','#7aa116','s3'],
+];
+P.forEach((p,i)=>{
+  const d=document.createElement('div');d.className='pill';
+  d.style.cssText=`left:${40+i*306}px;top:1250px;width:290px;height:112px;--c:${p[3]}`;
+  d.innerHTML=`<div class="ic"><img src="${ICONS[p[4]]}" style="width:30px;height:30px"></div><b>${p[1]}</b>${p[2]}`;
+  stage.appendChild(d);
+});
+</script>
+</body>
+</html>
