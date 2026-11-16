@@ -13,15 +13,15 @@ skip-check:
   # Lambdas run outside a VPC; a VPC needs NAT or endpoints to reach AWS APIs, which cost money.
   - CKV_AWS_117 # Lambda inside a VPC
 
-  # The demo VPC has no NAT gateway or interface endpoints (money), so tasks use public subnets.
+  # The short-lived VPC has no NAT gateway or interface endpoints (money), so tasks use public subnets.
   - CKV_AWS_130 # Subnet assigns public IPs on launch
   - CKV_AWS_333 # ECS service assigns public IPs
   - CKV_AWS_382 # Security group allows all egress (needed to reach ECR and AWS APIs)
 
-  # Flow logs cost money for a short-lived demo VPC.
+  # Flow logs cost money for a short-lived VPC.
   - CKV2_AWS_11 # VPC flow logging
 
-  # HTTPS on the ALB needs a domain and certificate, which the demo does not have.
+  # HTTPS on the ALB needs a domain and certificate, which this stack does not have.
   - CKV_AWS_2 # ALB listener uses HTTPS
   - CKV_AWS_103 # ALB listener uses TLS 1.2
   - CKV2_AWS_20 # ALB redirects HTTP to HTTPS
@@ -34,14 +34,14 @@ skip-check:
   - CKV_AWS_157 # RDS Multi-AZ
   - CKV_AWS_118 # RDS enhanced monitoring
 
-  # Log retention of one year costs money; short retention is enough for the demo.
+  # Log retention of one year costs money; short retention is enough for a short-lived stack.
   - CKV_AWS_338 # CloudWatch log group retention of at least one year
 
   # Cross-region replication and S3 access logging need extra buckets and storage (money).
   - CKV_AWS_144 # S3 cross-region replication
   - CKV_AWS_18 # S3 access logging
 
-  # Lambda: SQS-triggered retries and DLQs already exist, and code signing is overkill for a demo.
+  # Lambda: SQS-triggered retries and DLQs already exist, and code signing is overkill for this project.
   - CKV_AWS_115 # Lambda reserved concurrency limit
   - CKV_AWS_116 # Lambda dead letter queue
   - CKV_AWS_272 # Lambda code signing
@@ -56,7 +56,7 @@ skip-check:
   - CKV_AWS_131 # ALB drops invalid header fields
   - CKV_AWS_378 # ALB target group uses HTTPS
 
-  # RDS extras cost money or add setup for a one-day demo.
+  # RDS extras cost money or add setup for a one-day stack.
   - CKV_AWS_353 # RDS Performance Insights
   - CKV_AWS_161 # RDS IAM authentication
   - CKV_AWS_129 # RDS log exports to CloudWatch
@@ -66,5 +66,5 @@ skip-check:
   - CKV2_AWS_62 # S3 event notifications
   - CKV2_AWS_61 # S3 lifecycle configuration
 
-  # latest is re-pushed on every demo deploy, so ECR tags must be mutable.
+  # latest is re-pushed on every deploy, so ECR tags must be mutable.
   - CKV_AWS_51 # ECR image tags are immutable
