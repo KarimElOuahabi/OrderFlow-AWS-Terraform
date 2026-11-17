@@ -45,9 +45,3 @@ variable "desired_count" {
   type        = number
   default     = 0
 }
-
-variable "event_bus_name" {
-  description = "Name of the EventBridge bus the order-service publishes to"
-  type        = string
-  default     = "orderflow-orders-bus"
-}

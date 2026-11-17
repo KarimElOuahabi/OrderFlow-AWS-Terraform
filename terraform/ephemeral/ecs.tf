@@ -97,9 +97,10 @@ resource "aws_iam_role_policy" "ecs_task_put_events" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect   = "Allow"
-        Action   = "events:PutEvents"
-        Resource = "arn:aws:events:${var.aws_region}:${data.aws_caller_identity.current.account_id}:event-bus/${var.event_bus_name}"
+        Effect = "Allow"
+        Action = "events:PutEvents"
+        # The bus is created by the core stack, so its name comes from there instead of a duplicated default.
+        Resource = "arn:aws:events:${var.aws_region}:${data.aws_caller_identity.current.account_id}:event-bus/${data.terraform_remote_state.core.outputs.event_bus_name}"
       }
     ]
   })
@@ -128,7 +129,7 @@ resource "aws_ecs_task_definition" "order_service" {
         { name = "SPRING_DATASOURCE_URL", value = "jdbc:postgresql://${aws_db_instance.db.address}:5432/${aws_db_instance.db.db_name}" },
         { name = "SPRING_DATASOURCE_USERNAME", value = aws_db_instance.db.username },
         { name = "ORDERFLOW_AWS_REGION", value = var.aws_region },
-        { name = "ORDERFLOW_EVENTBRIDGE_BUS_NAME", value = var.event_bus_name },
+        { name = "ORDERFLOW_EVENTBRIDGE_BUS_NAME", value = data.terraform_remote_state.core.outputs.event_bus_name },
         { name = "COGNITO_ISSUER_URI", value = data.terraform_remote_state.core.outputs.issuer_uri },
       ]
 

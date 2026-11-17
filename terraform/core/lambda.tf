@@ -73,7 +73,9 @@ resource "aws_lambda_event_source_mapping" "order_created" {
   event_source_arn = aws_sqs_queue.order_created.arn
   function_name    = aws_lambda_function.processor.arn
   batch_size       = 5
-  enabled          = false
+
+  # Controlled by a variable so it can be switched on without editing the code.
+  enabled = var.enable_mappings
 }
 
 resource "aws_iam_role" "notify" {
@@ -152,5 +154,7 @@ resource "aws_lambda_event_source_mapping" "notify" {
   event_source_arn = aws_sqs_queue.notify.arn
   function_name    = aws_lambda_function.notify.arn
   batch_size       = 5
-  enabled          = false
+
+  # Controlled by a variable so it can be switched on without editing the code.
+  enabled = var.enable_mappings
 }

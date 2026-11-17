@@ -247,7 +247,9 @@ resource "aws_lambda_event_source_mapping" "triage" {
   function_name     = aws_lambda_function.triage.arn
   starting_position = "LATEST"
   batch_size        = 1
-  enabled           = false
+
+  # Controlled by a variable so it can be switched on without editing the code.
+  enabled = var.enable_mappings
 
   # A failing record is dropped after a few retries instead of blocking the shard.
   maximum_retry_attempts = 3

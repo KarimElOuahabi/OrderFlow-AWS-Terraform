@@ -15,6 +15,13 @@ variable "sender_email" {
   description = "Verified SES address the notification emails are sent from"
 }
 
+# Off by default so a fresh apply cannot start consuming queues or the stream before SES and Bedrock are ready.
+variable "enable_mappings" {
+  type        = bool
+  default     = false
+  description = "Enable the Lambda event source mappings (processor, notify, triage). Set to true once SES and Bedrock access are ready."
+}
+
 variable "triage_model_id" {
   type        = string
   default     = "us.anthropic.claude-haiku-5-5"
