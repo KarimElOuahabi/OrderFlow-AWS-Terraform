@@ -2,33 +2,19 @@
 
 A small event-driven order and support-ticket platform on AWS, built to practice cloud engineering with Terraform and CI/CD.
 
-## How it works
+## Features
 
-- **Orders:** a Spring Boot `order-service` (ECS Fargate) saves orders in PostgreSQL and publishes an `OrderCreated` event to EventBridge. The event goes to SQS queues (with dead-letter queues), and Python Lambdas store it in DynamoDB and email the customer through SES.
-- **Tickets:** customers open support tickets through an API Gateway and Lambda API. An AI model on Amazon Bedrock triages each ticket, and an admin approves it.
-- **Login:** both APIs use Amazon Cognito JWTs. The customer identity comes from the token, never from the request body.
+- **Orders:** a Spring Boot `order-service` on ECS Fargate saves orders in PostgreSQL and publishes `OrderCreated` events to EventBridge.
+- **Event processing:** SQS queues with dead-letter queues feed Python Lambdas that store events in DynamoDB and email customers through SES.
+- **Support tickets:** customers open tickets through API Gateway and Lambda. Amazon Bedrock triages each ticket and an admin approves it.
+- **Login:** both APIs use Amazon Cognito JWTs.
+- **Infrastructure as code:** three Terraform stacks. The costly resources (RDS, ALB) live in an on-demand stack that can be destroyed on its own.
+- **CI/CD:** a Jenkins pipeline with Gitleaks, Semgrep, Checkov and Trivy scans before deploying to ECS.
 
 ## Tech stack
 
 Java 21 · Spring Boot · Python · Terraform · AWS (ECS Fargate, ECR, RDS, EventBridge, SQS, Lambda, DynamoDB, API Gateway, Cognito, SES, Bedrock) · Docker · Jenkins
 
-## Project layout
+## Related project
 
-```
-services/order-service/   Spring Boot service
-terraform/bootstrap/      S3 bucket for Terraform state
-terraform/core/           Always-on serverless resources and Lambda code
-terraform/ephemeral/      VPC, RDS, ALB, ECS (applied on demand, destroyed after use)
-Jenkinsfile               CI/CD pipeline
-```
-
-The costly resources (RDS, ALB) live in the `ephemeral` stack, so they can be destroyed without touching the serverless stack.
-
-## CI/CD
-
-The Jenkins pipeline builds and tests the service, then runs security scans: Gitleaks (secrets), Semgrep (code), Checkov (Terraform) and Trivy (Docker image). It fails on findings. Pushing to ECR and deploying to ECS only run when the `DEPLOY` option is ticked.
-
-## Notes
-
-- Some Checkov checks are skipped on purpose (cost, no custom domain, no customer-managed keys). Each skip has a reason in `terraform/.checkov.yaml`.
-- There is no NAT gateway, WAF or multi-AZ database, to keep costs low.
+[OrderManagement-Kafka](https://github.com/KarimElOuahabi/OrderManagement-Kafka): a similar project built with Kafka and Docker.
