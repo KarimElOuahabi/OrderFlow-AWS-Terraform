@@ -2,6 +2,8 @@
 
 A small event-driven order and support-ticket platform on AWS, built to practice cloud engineering with Terraform and CI/CD.
 
+![OrderFlow architecture](docs/slides/orderflow-architecture.png)
+
 ## Features
 
 - **Orders:** a Spring Boot `order-service` on ECS Fargate saves orders in PostgreSQL and publishes `OrderCreated` events to EventBridge.
